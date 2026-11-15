@@ -91,6 +91,33 @@
   .lbl-green{color:var(--green);}
   .input-flex{display:flex; align-items:center; gap:.6rem;}
   .input-flex span{font-size:.8rem; color:var(--muted); white-space:nowrap;}
+
+  /* ============ PERTES DE CHARGE RÉSEAU ============ */
+  .pdc-sec{border:1px dashed #475569;border-radius:10px;padding:.6rem .8rem;display:flex;flex-direction:column;gap:.45rem;background:rgba(15,23,42,.45);margin-top:.3rem;}
+  .pdc-sec-row{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem;}
+  .pdc-inline{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--txt);margin:0;}
+  .pdc-sec select,.pdc-sec input[type=number]{width:auto;min-width:0;font-size:.82rem;padding:.32rem .5rem;}
+  .pdc-sec .pdc-dn{max-width:200px;}
+  .pdc-sec .pdc-rectstd{max-width:200px;}
+  .pdc-sec input.pdc-a,.pdc-sec input.pdc-b{width:62px;}
+  .pdc-addbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.8rem;}
+  .pdc-addbar select{width:auto;min-width:250px;}
+  .pdc-addbar button{width:auto;margin-top:0;padding:.5rem .9rem;font-size:.85rem;background:var(--card2);color:var(--txt);border:1px solid #475569;}
+  .pdc-addbar button#pdcAddBtn{background:var(--accent);color:#0f172a;border:none;font-weight:700;}
+  .pdc-table{font-size:.8rem;}
+  .pdc-table th,.pdc-table td{text-align:left;padding:.4rem .45rem;vertical-align:middle;}
+  .pdc-table th.num,.pdc-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .pdc-table input[type=number],.pdc-table select{width:auto;display:inline-block;font-size:.78rem;padding:.26rem .4rem;}
+  .pdc-table input.pdc-a,.pdc-table input.pdc-b{width:62px;}
+  .pdc-table select.pdc-dn,.pdc-table select.pdc-rectstd{max-width:190px;}
+  .pdc-table tr.warn td{background:rgba(251,191,36,.08);}
+  .pdc-table tr.bad td{background:rgba(248,113,113,.10);}
+  .pdc-tag{display:inline-block;font-size:.66rem;font-weight:700;padding:.12rem .45rem;border-radius:999px;background:#0ea5e9;color:#082f49;margin-bottom:.15rem;}
+  .pdc-tag.lin{background:rgba(74,222,128,.18);color:var(--ok);}
+  .pdc-tag.sing{background:rgba(251,191,36,.18);color:var(--warn);}
+  .pdc-seclbl{font-size:.7rem;color:var(--muted);}
+  .pdc-del{background:transparent;border:1px solid #7f1d1d;color:var(--bad);border-radius:6px;width:auto;margin:0;padding:.12rem .5rem;font-size:.78rem;}
+  @media print{.tabs,.pdc-addbar,.pdc-del{display:none!important;}}
 </style>
 </head>
 <body>
@@ -103,6 +130,7 @@
     <button class="tab active" data-page="pBruit">🌀 Bruit de régénération</button>
     <button class="tab" data-page="pGaines">📐 Gaines de ventilation</button>
     <button class="tab" data-page="pCta">🔥 Batterie CTA</button>
+    <button class="tab" data-page="pPdc">🌀 Pertes de charge réseau</button>
   </nav>
 
   <!-- ================================================= -->
@@ -275,6 +303,85 @@
           Les températures d'eau aller/retour servent de référence pour le régime de batterie.
         </p>
       </div>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- PAGE 4 : PERTES DE CHARGE RÉSEAU AÉRAULIQUE -->
+  <!-- ================================================= -->
+  <section class="page" id="pPdc">
+    <div class="card" style="margin-bottom:1.25rem">
+      <h2>Paramètres généraux</h2>
+      <div class="row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div>
+          <label>Débit d'air Q (m³/h)</label>
+          <input type="number" id="pdcQ" value="1500" min="0" step="10">
+        </div>
+        <div>
+          <label>Température de l'air (°C)</label>
+          <input type="number" id="pdcT" value="20" step="0.5">
+        </div>
+        <div>
+          <label>Rugosité ε (mm) — tôle galva ≈ 0,15</label>
+          <input type="number" id="pdcEps" value="0.15" min="0" step="0.01">
+        </div>
+      </div>
+      <label>Section initiale du conduit</label>
+      <div class="pdc-sec" id="pdcSec0"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.25rem">
+      <h2>Éléments du parcours (du ventilateur vers la bouche)</h2>
+      <div class="pdc-addbar">
+        <select id="pdcAddSel">
+          <option value="longueur">Longueur droite</option>
+          <option value="coude">Coude</option>
+          <option value="tee">Té (dérivation / traversée)</option>
+          <option value="reduction">Réduction conique</option>
+          <option value="evasement">Évasement (divergent)</option>
+          <option value="registre">Registre de réglage</option>
+          <option value="bouche">Bouche / grille (terminaison)</option>
+          <option value="entree">Entrée d'air (prise extérieure)</option>
+          <option value="sortie">Sortie (rejet)</option>
+          <option value="silencieux">Silencieux</option>
+          <option value="clapet">Clapet anti-retour</option>
+        </select>
+        <button id="pdcAddBtn">+ Ajouter l'élément</button>
+        <button id="pdcExemple">Charger un exemple</button>
+        <button id="pdcReset">Réinitialiser</button>
+        <button id="pdcPrint">Imprimer</button>
+      </div>
+      <table class="band-table pdc-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Élément</th><th>Paramètres</th>
+            <th class="num">v (m/s)</th><th class="num">ζ / λ</th><th class="num">ΔP (Pa)</th><th class="num">Cumul (Pa)</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="pdcBody"></tbody>
+      </table>
+      <p class="legend" id="pdcEmpty" style="display:block">Aucun élément : ajoutez une longueur droite, un coude, un té, une réduction…</p>
+    </div>
+
+    <div class="card">
+      <h2>Résultats</h2>
+      <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="kpi"><div class="v" id="pdcKLin">—</div><div class="l">Pertes linéiques (Pa)</div></div>
+        <div class="kpi"><div class="v" id="pdcKSing">—</div><div class="l">Pertes singulières (Pa)</div></div>
+        <div class="kpi hl"><div class="v" id="pdcKTot">—</div><div class="l">Perte de charge totale</div></div>
+        <div class="kpi"><div class="v" id="pdcKUnit" style="font-size:1rem">—</div><div class="l">mbar · mmCE</div></div>
+        <div class="kpi"><div class="v" id="pdcKFan">—</div><div class="l">Pression ventilateur (+20 %)</div></div>
+        <div class="kpi"><div class="v" id="pdcKEnd" style="font-size:.95rem">—</div><div class="l">Fin de parcours (section · débit)</div></div>
+      </div>
+      <div class="verdict" id="pdcVerdict"></div>
+      <p class="legend">
+        <b>Circulaire</b> : DN normalisés <b>EN 1506</b> (★ = série préférée R20 : 80 à 1600 mm).
+        <b>Rectangulaire</b> : dimensions <b>EN 1505</b> saisies <b>au cm près</b> (a × b en cm), ou tailles courantes proposées.<br>
+        <b>Linéaires</b> : ΔP = λ·(L/D<sub>h</sub>)·ρv²/2 (Darcy-Weisbach), λ par Haaland (turbulent) ou 64/Re (laminaire), D<sub>h</sub> = 2ab/(a+b) en rectangulaire.<br>
+        <b>Singulières</b> : ΔP = ζ·ρv²/2 — ζ indicatifs (coude, té, réduction, évasement, registre, bouches, silencieux) d'après Idelchik / guide CETIAT, à affiner avec les données constructeur.<br>
+        Air : ρ = p/(R·T), μ par Sutherland (20 °C → ρ ≈ 1,204 kg/m³). Vitesses indicatives : ≤ 6 m/s en branche terminale, 8–12 m/s en collecteur (orange), &gt; 12 m/s bruyant (rouge).<br>
+        Le parcours est suivi élément par élément : une réduction/évasement change la section courante, un té en « branche » avec « continuer » réduit le débit courant.
+      </p>
     </div>
   </section>
 </div>
@@ -503,6 +610,405 @@ function calculerPuissance(){
   vd.className = "verdict show " + cls;
   vd.textContent = txt;
 }
+/* ================================================= */
+/* PAGE 4 : PERTES DE CHARGE RÉSEAU AÉRAULIQUE */
+/* ================================================= */
+/* DN circulaires normalisés EN 1506 (★ = série préférée R20) */
+const DN_LIST = [63,80,100,125,150,160,180,200,224,250,280,315,355,400,450,500,560,630,710,800,900,1000,1120,1250,1400,1600,1800,2000];
+const DN_PREF = new Set([80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600]);
+/* Tailles rectangulaires courantes EN 1505, en cm (a × b) */
+const RECT_STD = [[20,10],[25,12],[25,15],[30,15],[30,20],[40,20],[40,25],[50,25],[50,30],[60,30],[60,40],[80,40],[80,50],[100,50],[100,60],[125,60],[125,80],[150,80],[150,100],[200,100],[200,125],[250,125],[250,150]];
+
+const PDC_KEY = "calculateurs-cvc-pdc-v1";
+const pdcState = {Q:1500, T:20, eps:0.15, sec0:{kind:"circ", dn:315}, elements:[]};
+let pdcUid = 1;
+
+const PDC_TYPE_LABEL = {longueur:"Longueur droite", coude:"Coude", tee:"Té", reduction:"Réduction", evasion:"Évasement", registre:"Registre", bouche:"Bouche / grille", entree:"Entrée d'air", sortie:"Sortie", silencieux:"Silencieux", clapet:"Clapet anti-retour"};
+const PDC_BOUCHE = {soufflage:2.5, reprise:1.8, diffuseur:1.5, anemostat:3.0};
+const PDC_BOUCHE_LABEL = {soufflage:"Bouche de soufflage", reprise:"Grille de reprise", diffuseur:"Diffuseur", anemostat:"Anémostat"};
+
+/* Coefficients indicatifs (Idelchik / guide CETIAT) */
+const PDC_COUDE90 = [[0.5,0.75],[0.75,0.50],[1.0,0.35],[1.25,0.28],[1.5,0.24],[2.0,0.20]];
+const PDC_ANG     = [[15,0.25],[30,0.40],[45,0.55],[60,0.70],[75,0.85],[90,1.0]];
+const PDC_TEE_B   = [[0.1,1.60],[0.2,1.45],[0.3,1.30],[0.4,1.15],[0.5,1.00],[0.6,0.90],[0.7,0.80],[0.8,0.70],[0.9,0.65],[1.0,0.60]];
+const PDC_TEE_T   = [[0.1,0.00],[0.2,0.05],[0.3,0.10],[0.4,0.20],[0.5,0.30],[0.6,0.42],[0.7,0.55],[0.8,0.70],[0.9,0.85],[1.0,1.00]];
+const PDC_RED_AR  = [[1.0,0.00],[0.8,0.06],[0.6,0.15],[0.4,0.28],[0.2,0.42],[0.1,0.48]];
+const PDC_RED_AN  = [[10,0.5],[20,0.8],[30,1.0],[45,1.3],[60,1.6],[90,2.2]];
+const PDC_EV_AN   = [[5,0.06],[10,0.14],[15,0.28],[20,0.42],[30,0.65],[45,0.90],[60,1.0],[90,1.0],[120,1.0]];
+const PDC_REG     = [[100,0.05],[90,0.10],[80,0.25],[70,0.55],[60,1.10],[50,2.20],[40,4.50],[30,9.50],[20,25],[10,110],[5,400]];
+
+function pdcInterp(x, table){
+  const t = table[0][0] <= table[table.length-1][0] ? table : table.slice().reverse();
+  if(x <= t[0][0]) return t[0][1];
+  for(let i = 1; i < t.length; i++){
+    if(x <= t[i][0]){
+      const x0 = t[i-1][0], y0 = t[i-1][1], x1 = t[i][0], y1 = t[i][1];
+      return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+    }
+  }
+  return t[t.length-1][1];
+}
+
+function pdcAir(T){
+  const Tk = T + 273.15;
+  const rho = 101325 / (287.05 * Tk);
+  const mu = 1.716e-5 * Math.pow(Tk / 273.15, 1.5) * (273.15 + 110.4) / (Tk + 110.4);
+  return {rho: rho, nu: mu / rho};
+}
+
+function pdcLambda(Re, epsM, Dh){
+  if(Re <= 0) return 0;
+  if(Re < 2300) return 64 / Re;
+  const inv = -1.8 * Math.log10(Math.pow(epsM / (3.7 * Dh), 1.11) + 6.9 / Re);
+  return 1 / (inv * inv);
+}
+
+function pdcArea(sec){
+  if(sec.kind === "circ"){ const d = sec.dn / 1000; return Math.PI * d * d / 4; }
+  return (sec.a / 100) * (sec.b / 100);
+}
+function pdcDh(sec){
+  if(sec.kind === "circ") return sec.dn / 1000;
+  const a = sec.a / 100, b = sec.b / 100;
+  return 2 * a * b / (a + b);
+}
+function pdcLabelSec(sec){
+  if(sec.kind === "circ") return "DN " + sec.dn + " (Ø " + sec.dn + " mm)";
+  return sec.a + " × " + sec.b + " cm (" + sec.a*10 + "×" + sec.b*10 + " mm)";
+}
+
+function pdcDefaults(type){
+  switch(type){
+    case "longueur":   return {L:5};
+    case "coude":      return {angle:90, rd:1};
+    case "tee":        return {mode:"branche", angle:90, ratio:0.5, continuer:true};
+    case "reduction":  return {sec2:{kind:"circ", dn:250}, angle:30};
+    case "evasement":  return {sec2:{kind:"circ", dn:400}, angle:20};
+    case "registre":   return {ouverture:100};
+    case "bouche":     return {typeB:"soufflage", zeta:2.5};
+    case "silencieux": return {zeta:0.3};
+    default:           return {};
+  }
+}
+
+function pdcRecompute(){
+  const air = pdcAir(pdcState.T);
+  const epsM = (pdcState.eps || 0) / 1000;
+  let sec = pdcState.sec0, Q = pdcState.Q || 0;
+  const rows = [];
+  let lin = 0, sing = 0;
+  for(const el of pdcState.elements){
+    const p = el.params;
+    const secUsed = sec;
+    const A = pdcArea(sec), Dh = pdcDh(sec);
+    const v = (Q > 0 && A > 0) ? Q / 3600 / A : 0;
+    const Re = v > 0 ? v * Dh / air.nu : 0;
+    const lam = pdcLambda(Re, epsM, Dh);
+    const dyn = air.rho * v * v / 2;
+    let zeta = null, dP = 0, kind = "sing", desc = "";
+    switch(el.type){
+      case "longueur":
+        dP = lam * (p.L / Dh) * dyn; kind = "lin"; desc = "L = " + p.L + " m";
+        break;
+      case "coude":
+        zeta = pdcInterp(p.rd, PDC_COUDE90) * pdcInterp(p.angle, PDC_ANG);
+        dP = zeta * dyn; desc = p.angle + "°, r/D = " + p.rd;
+        break;
+      case "tee": {
+        const ratio = Math.min(1, Math.max(0.05, parseFloat(p.ratio) || 0.5));
+        if(p.mode === "branche"){
+          const vb = v * ratio;
+          zeta = (p.angle === 45 ? 0.6 : 1) * pdcInterp(ratio, PDC_TEE_B);
+          dP = zeta * air.rho * vb * vb / 2;
+          desc = "branche " + p.angle + "°, Qb/Q = " + ratio;
+          if(p.continuer) Q = Q * ratio;
+        } else {
+          zeta = pdcInterp(ratio, PDC_TEE_T);
+          dP = zeta * dyn;
+          desc = "traversée, Qb/Q = " + ratio;
+        }
+        break;
+      }
+      case "reduction":
+      case "evasement": {
+        const A2 = pdcArea(p.sec2);
+        if(el.type === "reduction"){
+          const v2 = (Q > 0 && A2 > 0) ? Q / 3600 / A2 : 0;
+          zeta = pdcInterp(A2 / A, PDC_RED_AR) * pdcInterp(p.angle, PDC_RED_AN);
+          dP = zeta * air.rho * v2 * v2 / 2;
+        } else {
+          zeta = pdcInterp(p.angle, PDC_EV_AN) * Math.pow(1 - A / A2, 2);
+          dP = zeta * dyn;
+        }
+        desc = pdcLabelSec(secUsed) + " → " + pdcLabelSec(p.sec2) + ", α = " + p.angle + "°";
+        sec = p.sec2;
+        break;
+      }
+      case "registre":
+        zeta = pdcInterp(Math.max(5, parseFloat(p.ouverture) || 100), PDC_REG);
+        dP = zeta * dyn; desc = "ouverture " + p.ouverture + " %";
+        break;
+      case "bouche":
+        zeta = p.typeB === "perso" ? (parseFloat(p.zeta) || 0) : PDC_BOUCHE[p.typeB];
+        dP = zeta * dyn;
+        desc = p.typeB === "perso" ? "ζ personnalisé = " + p.zeta : PDC_BOUCHE_LABEL[p.typeB] + " (ζ ≈ " + zeta + ")";
+        break;
+      case "entree":
+        zeta = 0.5; dP = zeta * dyn; desc = "prise d'air extérieure (ζ ≈ 0,5)";
+        break;
+      case "sortie":
+        zeta = 1.0; dP = zeta * dyn; desc = "rejet : perte de toute la pression dynamique (ζ = 1)";
+        break;
+      case "silencieux":
+        zeta = parseFloat(p.zeta) || 0; dP = zeta * dyn; desc = "ζ = " + zeta;
+        break;
+      case "clapet":
+        zeta = 1.8; dP = zeta * dyn; desc = "clapet anti-retour (ζ ≈ 1,8)";
+        break;
+    }
+    if(kind === "lin") lin += dP; else sing += dP;
+    rows.push({el: el, v: v, Re: Re, lam: lam, zeta: zeta, dP: dP, kind: kind, desc: desc, sec: secUsed});
+  }
+  return {rows: rows, lin: lin, sing: sing, total: lin + sing, secEnd: sec, QEnd: Q};
+}
+
+/* ---------- édition des sections ---------- */
+function pdcOpt(val, cur, lbl){
+  return '<option value="' + val + '"' + (String(val) === String(cur) ? " selected" : "") + '>' + (lbl || val) + '</option>';
+}
+
+function pdcSecEditorHTML(name){
+  const dnOpts = DN_LIST.map(d => '<option value="' + d + '">DN ' + d + (DN_PREF.has(d) ? " ★" : "") + '</option>').join("");
+  const rectOpts = RECT_STD.map(r => '<option value="' + r[0] + "x" + r[1] + '">' + r[0]*10 + " × " + r[1]*10 + ' mm</option>').join("");
+  return '<div class="pdc-sec-row">'
+    + '<label class="pdc-inline"><input type="radio" name="' + name + '" value="circ" checked> Circulaire (DN EN 1506)</label>'
+    + '<select class="pdc-dn">' + dnOpts + '</select>'
+    + '</div>'
+    + '<div class="pdc-sec-row">'
+    + '<label class="pdc-inline"><input type="radio" name="' + name + '" value="rect"> Rectangulaire (EN 1505)</label>'
+    + '<span class="pdc-inline"><input type="number" class="pdc-a" min="5" max="400" step="1" value="40"> cm × <input type="number" class="pdc-b" min="5" max="400" step="1" value="20"> cm</span>'
+    + '<select class="pdc-rectstd"><option value="">Tailles courantes…</option>' + rectOpts + '</select>'
+    + '</div>';
+}
+
+function pdcGetSec(root, name){
+  const checked = root.querySelector('input[name="' + name + '"]:checked');
+  if(!checked) return {kind:"circ", dn:315};
+  if(checked.value === "circ"){
+    return {kind:"circ", dn: parseInt(root.querySelector(".pdc-dn").value, 10) || 315};
+  }
+  const a = Math.round(parseFloat(root.querySelector(".pdc-a").value) || 0);
+  const b = Math.round(parseFloat(root.querySelector(".pdc-b").value) || 0);
+  return {kind:"rect", a: Math.max(1, a), b: Math.max(1, b)};
+}
+
+function pdcSetSec(root, name, sec){
+  const r = root.querySelector('input[name="' + name + '"][value="' + sec.kind + '"]');
+  if(r) r.checked = true;
+  if(sec.kind === "circ"){
+    const sel = root.querySelector(".pdc-dn");
+    if(sel && DN_LIST.indexOf(sec.dn) >= 0) sel.value = String(sec.dn);
+  } else {
+    root.querySelector(".pdc-a").value = sec.a;
+    root.querySelector(".pdc-b").value = sec.b;
+  }
+}
+
+function pdcWireSec(root, name, onChange){
+  root.addEventListener("input", onChange);
+  root.addEventListener("change", () => {
+    const rs = root.querySelector(".pdc-rectstd");
+    if(rs && rs.value){
+      const parts = rs.value.split("x");
+      const r = root.querySelector('input[name="' + name + '"][value="rect"]');
+      if(r) r.checked = true;
+      root.querySelector(".pdc-a").value = parts[0];
+      root.querySelector(".pdc-b").value = parts[1];
+      rs.value = "";
+    }
+    onChange();
+  });
+}
+
+/* ---------- lignes d'éléments ---------- */
+function pdcParamsHTML(el){
+  const p = el.params;
+  switch(el.type){
+    case "longueur":
+      return '<span class="pdc-seclbl">L</span> <input type="number" data-f="L" min="0" step="0.1" value="' + p.L + '" style="width:70px"> <span class="pdc-seclbl">m</span>';
+    case "coude":
+      return '<select data-f="angle">' + [15,30,45,60,90].map(a => pdcOpt(a, p.angle, a + "°")).join("") + '</select>'
+           + ' <span class="pdc-seclbl">r/D</span> <input type="number" data-f="rd" min="0.5" max="3" step="0.25" value="' + p.rd + '" style="width:62px">';
+    case "tee":
+      return '<select data-f="mode">' + pdcOpt("branche", p.mode, "branche") + pdcOpt("traversee", p.mode, "traversée") + '</select>'
+           + ' <select data-f="angle">' + pdcOpt(45, p.angle, "45°") + pdcOpt(90, p.angle, "90°") + '</select>'
+           + ' <span class="pdc-seclbl">Qb/Q</span> <input type="number" data-f="ratio" min="0.05" max="1" step="0.05" value="' + p.ratio + '" style="width:60px">'
+           + ' <label class="pdc-inline"><input type="checkbox" data-f="continuer"' + (p.continuer ? " checked" : "") + '> continuer sur la branche</label>';
+    case "reduction":
+    case "evasement": {
+      const name = "sec" + el.id;
+      const angles = el.type === "reduction" ? [10,15,20,30,45,60,90] : [5,10,15,20,30,45,60,90];
+      return '<div class="pdc-sec" data-secname="' + name + '">' + pdcSecEditorHTML(name) + '</div>'
+           + '<span class="pdc-seclbl">α</span> <select data-f="angle">' + angles.map(a => pdcOpt(a, p.angle, a + "°")).join("") + '</select>';
+    }
+    case "registre":
+      return '<input type="number" data-f="ouverture" min="5" max="100" step="5" value="' + p.ouverture + '" style="width:64px"> <span class="pdc-seclbl">% ouvert</span>';
+    case "bouche":
+      return '<select data-f="typeB">' + Object.keys(PDC_BOUCHE_LABEL).map(k => pdcOpt(k, p.typeB, PDC_BOUCHE_LABEL[k])).join("") + pdcOpt("perso", p.typeB, "ζ personnalisé") + '</select>'
+           + ' <span class="pdc-seclbl">ζ</span> <input type="number" data-f="zeta" min="0" step="0.1" value="' + p.zeta + '" style="width:58px"' + (p.typeB === "perso" ? "" : " disabled") + '>';
+    case "silencieux":
+      return '<span class="pdc-seclbl">ζ</span> <input type="number" data-f="zeta" min="0" step="0.05" value="' + p.zeta + '" style="width:62px">';
+    default:
+      return '<span class="pdc-seclbl">—</span>';
+  }
+}
+
+function pdcRender(){
+  const tb = document.getElementById("pdcBody");
+  tb.innerHTML = "";
+  pdcState.elements.forEach((el, i) => {
+    const tr = document.createElement("tr");
+    tr.dataset.id = el.id;
+    tr.innerHTML = '<td>' + (i+1) + '</td>'
+      + '<td><span class="pdc-tag ' + (el.type === "longueur" ? "lin" : "sing") + '">' + (PDC_TYPE_LABEL[el.type] || el.type) + '</span>'
+      + '<div class="pdc-seclbl" data-c="sec"></div><div class="pdc-seclbl" data-c="desc"></div></td>'
+      + '<td>' + pdcParamsHTML(el) + '</td>'
+      + '<td class="num" data-c="v"></td><td class="num" data-c="z"></td><td class="num" data-c="p"></td><td class="num" data-c="c"></td>'
+      + '<td><button class="pdc-del" title="Supprimer">✕</button></td>';
+    tb.appendChild(tr);
+    tr.querySelectorAll("[data-f]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const f = inp.dataset.f;
+        if(inp.type === "checkbox") el.params[f] = inp.checked;
+        else if(inp.type === "number"){ const x = parseFloat(inp.value); if(!isNaN(x)) el.params[f] = x; }
+        else el.params[f] = inp.value;
+        if(f === "typeB"){ const z = tr.querySelector('[data-f="zeta"]'); if(z) z.disabled = inp.value !== "perso"; }
+        pdcPaint(); pdcSave();
+      });
+    });
+    const secDiv = tr.querySelector("[data-secname]");
+    if(secDiv){
+      const name = secDiv.dataset.secname;
+      pdcSetSec(secDiv, name, el.params.sec2);
+      pdcWireSec(secDiv, name, () => { el.params.sec2 = pdcGetSec(secDiv, name); pdcPaint(); pdcSave(); });
+    }
+    tr.querySelector(".pdc-del").addEventListener("click", () => {
+      pdcState.elements = pdcState.elements.filter(e => e.id !== el.id);
+      pdcRender(); pdcPaint(); pdcSave();
+    });
+  });
+  document.getElementById("pdcEmpty").style.display = pdcState.elements.length ? "none" : "block";
+}
+
+function pdcPaint(){
+  const r = pdcRecompute();
+  let cum = 0;
+  const tb = document.getElementById("pdcBody");
+  r.rows.forEach(row => {
+    cum += row.dP;
+    const tr = tb.querySelector('tr[data-id="' + row.el.id + '"]');
+    if(!tr) return;
+    tr.querySelector('[data-c="sec"]').textContent = pdcLabelSec(row.sec);
+    tr.querySelector('[data-c="desc"]').textContent = row.desc + (row.Re > 0 ? " · Re=" + row.Re.toExponential(1) + ", λ=" + row.lam.toFixed(4) : "");
+    tr.querySelector('[data-c="v"]').textContent = row.v.toFixed(2);
+    tr.querySelector('[data-c="z"]').textContent = row.kind === "lin" ? "λ=" + row.lam.toFixed(4) : (row.zeta === null ? "—" : row.zeta.toFixed(2));
+    tr.querySelector('[data-c="p"]').textContent = row.dP.toFixed(1);
+    tr.querySelector('[data-c="c"]').textContent = cum.toFixed(1);
+    tr.classList.toggle("warn", row.v > 8 && row.v <= 12);
+    tr.classList.toggle("bad", row.v > 12);
+    tr.title = row.Re > 0 ? "Re = " + Math.round(row.Re) + " · λ = " + row.lam.toFixed(4) : "";
+  });
+  document.getElementById("pdcKLin").textContent = r.lin.toFixed(1) + " Pa";
+  document.getElementById("pdcKSing").textContent = r.sing.toFixed(1) + " Pa";
+  document.getElementById("pdcKTot").textContent = r.total.toFixed(1) + " Pa";
+  document.getElementById("pdcKUnit").textContent = (r.total / 100).toFixed(2) + " mbar · " + (r.total / 9.80665).toFixed(1) + " mmCE";
+  document.getElementById("pdcKFan").textContent = (r.total * 1.2).toFixed(0) + " Pa";
+  document.getElementById("pdcKEnd").textContent = pdcLabelSec(r.secEnd) + " · " + Math.round(r.QEnd) + " m³/h";
+  const vd = document.getElementById("pdcVerdict");
+  let cls, txt;
+  if(r.total <= 0){ cls = "warn"; txt = "⚠ Saisissez un débit et ajoutez des éléments pour calculer le parcours."; }
+  else if(r.total < 200){ cls = "ok"; txt = "✔ Réseau peu résistant : " + r.total.toFixed(0) + " Pa — ventilateur basse pression suffisant."; }
+  else if(r.total < 600){ cls = "warn"; txt = "⚠ " + r.total.toFixed(0) + " Pa — réseau moyennement chargé, vérifier la courbe du ventilateur."; }
+  else { cls = "bad"; txt = "✘ " + r.total.toFixed(0) + " Pa — forte perte de charge : réduire les vitesses, limiter les coudes serrés ou augmenter les sections."; }
+  vd.className = "verdict show " + cls;
+  vd.textContent = txt;
+}
+
+/* ---------- persistance ---------- */
+function pdcSave(){
+  if(typeof localStorage === "undefined") return;
+  try{
+    localStorage.setItem(PDC_KEY, JSON.stringify({Q:pdcState.Q, T:pdcState.T, eps:pdcState.eps, sec0:pdcState.sec0, elements:pdcState.elements, uid:pdcUid}));
+  }catch(err){}
+}
+function pdcLoad(){
+  if(typeof localStorage === "undefined") return;
+  try{
+    const s = JSON.parse(localStorage.getItem(PDC_KEY) || "null");
+    if(!s) return;
+    if(isFinite(s.Q)) pdcState.Q = s.Q;
+    if(isFinite(s.T)) pdcState.T = s.T;
+    if(isFinite(s.eps)) pdcState.eps = s.eps;
+    if(s.sec0 && s.sec0.kind) pdcState.sec0 = s.sec0;
+    if(Array.isArray(s.elements)) pdcState.elements = s.elements;
+    if(isFinite(s.uid)) pdcUid = s.uid;
+  }catch(err){}
+}
+
+/* ---------- init ---------- */
+function pdcInit(){
+  pdcLoad();
+  const sec0Div = document.getElementById("pdcSec0");
+  sec0Div.innerHTML = pdcSecEditorHTML("pdcSec0name");
+  pdcSetSec(sec0Div, "pdcSec0name", pdcState.sec0);
+  pdcWireSec(sec0Div, "pdcSec0name", () => { pdcState.sec0 = pdcGetSec(sec0Div, "pdcSec0name"); pdcPaint(); pdcSave(); });
+
+  const q = document.getElementById("pdcQ"), t = document.getElementById("pdcT"), e = document.getElementById("pdcEps");
+  q.value = pdcState.Q; t.value = pdcState.T; e.value = pdcState.eps;
+  const updG = () => {
+    pdcState.Q = parseFloat(q.value) || 0;
+    const tv = parseFloat(t.value); pdcState.T = isNaN(tv) ? 20 : tv;
+    const ev = parseFloat(e.value); pdcState.eps = (isNaN(ev) || ev < 0) ? 0 : ev;
+    pdcPaint(); pdcSave();
+  };
+  [q, t, e].forEach(inp => { inp.addEventListener("input", updG); inp.addEventListener("change", updG); });
+
+  document.getElementById("pdcAddBtn").addEventListener("click", () => {
+    const type = document.getElementById("pdcAddSel").value;
+    pdcState.elements.push({id: pdcUid++, type: type, params: pdcDefaults(type)});
+    pdcRender(); pdcPaint(); pdcSave();
+  });
+
+  document.getElementById("pdcExemple").addEventListener("click", () => {
+    pdcState.Q = 1500; pdcState.T = 20; pdcState.eps = 0.15;
+    pdcState.sec0 = {kind:"circ", dn:315};
+    pdcState.elements = [
+      {id: pdcUid++, type:"longueur",  params:{L:8}},
+      {id: pdcUid++, type:"coude",     params:{angle:90, rd:1}},
+      {id: pdcUid++, type:"tee",       params:{mode:"branche", angle:90, ratio:0.5, continuer:true}},
+      {id: pdcUid++, type:"reduction", params:{sec2:{kind:"circ", dn:250}, angle:30}},
+      {id: pdcUid++, type:"longueur",  params:{L:5}},
+      {id: pdcUid++, type:"coude",     params:{angle:45, rd:1}},
+      {id: pdcUid++, type:"registre",  params:{ouverture:80}},
+      {id: pdcUid++, type:"bouche",    params:{typeB:"soufflage", zeta:2.5}}
+    ];
+    q.value = pdcState.Q; t.value = pdcState.T; e.value = pdcState.eps;
+    pdcSetSec(sec0Div, "pdcSec0name", pdcState.sec0);
+    pdcRender(); pdcPaint(); pdcSave();
+  });
+
+  document.getElementById("pdcReset").addEventListener("click", () => {
+    pdcState.elements = []; pdcUid = 1;
+    try{ localStorage.removeItem(PDC_KEY); }catch(err){}
+    pdcRender(); pdcPaint();
+  });
+
+  document.getElementById("pdcPrint").addEventListener("click", () => window.print());
+
+  pdcRender(); pdcPaint();
+}
+
+if (typeof document !== "undefined"){ pdcInit(); }
 </script>
 </body>
 </html>
